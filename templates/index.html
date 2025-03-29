@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Current Month Expenses</h2>
+    
+    <div class="chart-container">
+        <canvas id="expenseChart" width="400" height="400"></canvas>
+    </div>
+    
+    <div class="summary">
+        <h3>Total: ${{ "%.2f"|format(total) }}</h3>
+        <details>
+            <summary>Category Breakdown</summary>
+            <div class="breakdown-grid">
+                {% for category, amount in categories.items() %}
+                <div class="breakdown-item">
+                    <span>{{ category }}</span>
+                    <span>${{ "%.2f"|format(amount) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+    </div>
+    
+    <div class="actions">
+        <a href="{{ url_for('add_expense') }}" class="btn btn-primary">➕ Add Expense</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
+    </div>
+</div>
+
+<!-- Use Chart.js version 2.9.4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('expenseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ categories.keys()|list|tojson }},
+                datasets: [{
+                    data: {{ categories.values()|list|tojson }},
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#E7E9ED', '#8C9EFF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    });
+</script>
+{% endblock %}
