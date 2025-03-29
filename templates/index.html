@@ -15,7 +15,9 @@
             <div class="breakdown-grid">
                 {% for category, amount in categories.items() %}
                 <div class="breakdown-item">
-                    <span>{{ category }}</span>
+                    <a href="{{ url_for('category_expenses', category_name=category) }}" class="category-link">
+                        {{ category }}
+                    </a>
                     <span>${{ "%.2f"|format(amount) }}</span>
                 </div>
                 {% endfor %}
@@ -25,8 +27,8 @@
     
     <div class="actions">
         <a href="{{ url_for('add_expense') }}" class="btn btn-primary">➕ Add Expense</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-logout">🚪 Logout</a>
     </div>
+</div>
 </div>
 
 <!-- Use Chart.js version 2.9.4 -->

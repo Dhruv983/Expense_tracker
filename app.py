@@ -4,6 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 from config import Config
+from datetime import datetime, timedelta
+import pytz 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -107,6 +109,67 @@ def add_expense():
         return redirect(url_for('home'))
     
     return render_template('add_expense.html')
+
+@app.route('/category/<category_name>')
+def category_expenses(category_name):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    current_month = datetime.utcnow().month
+    
+    # Get expenses with Newfoundland time
+    expenses = Expense.query.filter(
+        Expense.user_id == user.id,
+        Expense.category == category_name,
+        db.extract('month', Expense.date) == current_month
+    ).order_by(Expense.date.desc()).all()
+    
+    # Convert times to Newfoundland
+    newfoundland = pytz.timezone('America/St_Johns')
+    for expense in expenses:
+        utc_time = expense.date.replace(tzinfo=pytz.utc)
+        expense.local_date = utc_time.astimezone(newfoundland)
+    
+    return render_template('category_expenses.html',
+                         category=category_name,
+                         expenses=expenses)
+
+# Add these new routes
+@app.route('/delete/<int:expense_id>', methods=['POST'])
+def delete_expense(expense_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    expense = Expense.query.get_or_404(expense_id)
+    if expense.user_id != session['user_id']:
+        abort(403)
+    
+    db.session.delete(expense)
+    db.session.commit()
+    return redirect(request.referrer)
+
+@app.route('/edit/<int:expense_id>', methods=['GET', 'POST'])
+def edit_expense(expense_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    expense = Expense.query.get_or_404(expense_id)
+    if expense.user_id != session['user_id']:
+        abort(403)
+
+    if request.method == 'POST':
+        expense.amount = float(request.form['amount'])
+        expense.category = request.form['category']
+        expense.payment_method = request.form['payment_method']
+        expense.card = request.form.get('card', '')
+        expense.note = request.form.get('note', '')
+        
+        db.session.commit()
+        return redirect(url_for('category_expenses', category_name=expense.category))
+    
+    # For GET request, render edit form
+    return render_template('edit_expense.html', expense=expense)
 
 @app.route('/logout')
 def logout():

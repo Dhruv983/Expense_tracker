@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header>
+    <a href="{{ url_for('category_expenses', category_name=expense.category) }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <a href="{{ url_for('logout') }}" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i>
+    </a>
+</header>
+
+<div class="container">
+    <h2>Edit Expense</h2>
+    <form method="POST">
+        <!-- Same fields as add_expense.html but with values -->
+        <div class="form-group">
+            <label>Payment Method:</label>
+            <select name="payment_method" id="paymentMethod" required>
+                <option value="Credit Card" {% if expense.payment_method == 'Credit Card' %}selected{% endif %}>Credit Card</option>
+                <option value="Debit" {% if expense.payment_method == 'Debit' %}selected{% endif %}>Debit</option>
+                <option value="Cash" {% if expense.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="cardSelection" 
+             style="display: {% if expense.payment_method == 'Credit Card' %}block{% else %}none{% endif %};">
+            <label>Card:</label>
+            <select name="card">
+                {% for card in ['AMEX', 'Scotia AMEX', 'PC MC', 'BMO MC', 'CIBC MC'] %}
+                <option value="{{ card }}" {% if expense.card == card %}selected{% endif %}>{{ card }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Category:</label>
+            <select name="category" required>
+                {% for cat in ['Grocery', 'Fuel', 'Milk', 'Walmart', 'Costco', 
+                              'Dominion', 'Sobeys', 'Dollarama', 'Food', 'Bills', 'Rent'] %}
+                <option value="{{ cat }}" {% if expense.category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Amount (CAD):</label>
+            <input type="number" step="0.01" name="amount" value="{{ expense.amount }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Note:</label>
+            <textarea name="note">{{ expense.note }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Expense</button>
+    </form>
+</div>
+
+<script>
+    // Same payment method toggle as add_expense.html
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+        document.getElementById('cardSelection').style.display = 
+            this.value === 'Credit Card' ? 'block' : 'none';
+    });
+</script>
+{% endblock %}
